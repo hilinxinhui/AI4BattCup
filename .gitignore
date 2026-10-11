@@ -1,0 +1,39 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+secrets/
+credentials/
+
+# Private competition material
+data/
+datasets/
+private/
+submissions/
+participant-code/
+models/
+
+# Runtime files and backups
+var/
+backups/
+logs/
+*.log
+work/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+Desktop.ini
