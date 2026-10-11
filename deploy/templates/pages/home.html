@@ -8,6 +8,7 @@
     .cup-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin: 2rem 0; }
     .cup-actions .ui.button { margin: 0; }
     .cup-home { width: 100%; padding-bottom: 2rem; }
+    .cup-benchmarks { margin: 1rem 0 2rem; }
 </style>
 {% endblock %}
 
@@ -26,6 +27,20 @@
             {% endif %}
         </div>
     </section>
-    <front-page-competitions></front-page-competitions>
+    <section class="cup-benchmarks" aria-labelledby="benchmarks-title">
+        <h2 id="benchmarks-title">Benchmarks</h2>
+        <div class="ui divided relaxed items">
+            {% for benchmark in public_benchmarks %}
+                <article class="item">
+                    <div class="content">
+                        <a class="header" href="{% url 'competitions:detail' pk=benchmark.pk %}">{{ benchmark.title }}</a>
+                        <div class="description">{{ benchmark.description|default:""|striptags|truncatechars:180 }}</div>
+                    </div>
+                </article>
+            {% empty %}
+                <p>暂无已发布的比赛。</p>
+            {% endfor %}
+        </div>
+    </section>
 </main>
 {% endblock %}

@@ -8,6 +8,15 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
+def public_benchmarks(request):
+    """One homepage list of published competitions, newest first."""
+    if request.path != "/":
+        return {}
+    from competitions.models import Competition
+    return {"public_benchmarks": Competition.objects.filter(published=True)
+            .only("id", "title", "description").order_by("-created_when", "-pk")}
+
+
 class ParticipantOnlyMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         user = request.user
