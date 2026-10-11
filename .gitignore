@@ -37,3 +37,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Local Codabench installation
+.local/

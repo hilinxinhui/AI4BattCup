@@ -1,0 +1,151 @@
+name: ai4batt
+
+x-app: &app
+  image: ai4batt/codabench:v1.33
+  build:
+    context: ../.local/codabench
+    dockerfile: packaging/container/Containerfile
+  env_file: ../.local/codabench/.env
+  network_mode: service:minio
+  volumes:
+    - ../.local/codabench:/app
+    - ./local_settings.py:/app/src/settings/ai4batt.py:ro
+    - django-temp:/codalab_tmp
+  restart: unless-stopped
+
+services:
+  scoring_image:
+    image: ai4batt/scoring:v1.33
+    build:
+      context: .
+      dockerfile: Scoring.Dockerfile
+    profiles: [tools]
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  rabbit:
+    image: rabbitmq:4.2.4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    hostname: ai4batt-rabbit
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  minio:
+    image: codalab/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /export
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - 127.0.0.1:9000:9000
+    volumes:
+      - storage:/export
+    restart: unless-stopped
+
+  createbuckets:
+    image: codalab/mc:RELEASE.2025-07-21T05-28-08Z
+    env_file: ../.local/codabench/.env
+    depends_on: [minio]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        until mc alias set local http://minio:9000 "$$MINIO_ACCESS_KEY" "$$MINIO_SECRET_KEY"; do sleep 2; done;
+        mc mb --ignore-existing local/public && mc mb --ignore-existing local/private &&
+        mc anonymous set download local/public && mc anonymous set none local/private
+
+  django:
+    <<: *app
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"]
+      interval: 5s
+      timeout: 10s
+      start_period: 60s
+      retries: 24
+    command:
+      - python manage.py migrate --no-input && python manage.py collectstatic --no-input && cd src && python gunicorn_run.py
+    depends_on:
+      db: {condition: service_healthy}
+      rabbit: {condition: service_healthy}
+      createbuckets: {condition: service_completed_successfully}
+      redis: {condition: service_started}
+
+  site_worker:
+    <<: *app
+    working_dir: /app/src
+    command: ["celery -A celery_config worker -B -Q site-worker -l info -n site-worker@%h --concurrency=2"]
+    depends_on:
+      django: {condition: service_healthy}
+
+  compute_worker:
+    image: ai4batt/compute-worker:v1.33
+    build:
+      context: ../.local/codabench
+      dockerfile: packaging/container/Containerfile.compute_worker
+    env_file: ../.local/codabench/.env
+    network_mode: service:minio
+    environment:
+      HOST_DIRECTORY: /var/lib/docker/volumes/ai4batt-worker/_data
+      BROKER_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbit:5672//
+      BROKER_USE_SSL: ""
+      DJANGO_SETTINGS_MODULE: ""
+      COMPETITION_CONTAINER_NETWORK_DISABLED: "True"
+      COMPETITION_ALLOW_IMAGE_PULL: "False"
+      COMPUTE_WORKER_NO_CLEANUP: "False"
+    volumes:
+      - worker-data:/codabench
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      django: {condition: service_healthy}
+    restart: unless-stopped
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ../.local/codabench:/app
+      - node-dependencies:/app/node_modules
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["npm install && npm run build-stylus && npm run build-riot"]
+
+  web:
+    image: caddy:2-alpine
+    ports:
+      - 127.0.0.1:8080:80
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../.local/codabench/src/staticfiles:/static:ro
+    depends_on:
+      django: {condition: service_healthy}
+    restart: unless-stopped
+
+volumes:
+  database:
+  storage:
+  rabbit-data:
+  django-temp:
+  node-dependencies:
+  worker-data:
+    name: ai4batt-worker
