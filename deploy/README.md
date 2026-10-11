@@ -42,6 +42,10 @@ docker compose --env-file .local/codabench/.env -f deploy/compose.yaml exec -T d
 
 ## 本地适配
 
+`deploy/templates` 保存本站页面模板，通过 `local_settings.py` 优先加载，无需修改 `.local` 中的上游源码。首页和页脚已移除上游机构标志、Partners、About、News、项目历史、论文引用以及其他平台宣传链接，改用 AI4Batt Cup 标题。保留比赛列表、数据集、登录与管理入口。修改模板后重启 Django 即可生效，无需重新构建镜像。
+
+`templates/base.html` 基于 Codabench v1.33 的同名模板修改，上游采用 Apache-2.0 许可，许可副本见 `templates/LICENSE.TXT`。
+
 通过 Caddy 提供网站和静态文件。Django 和两个 worker 共享 MinIO 的网络空间，使同一个 `localhost:9000` 存储签名地址同时供浏览器和后端使用。数据库等服务通过 Compose 网络连接。此网络布局只用于本地试运行，正式部署应改为稳定域名和 HTTPS。
 
 评测 worker 使用 Docker socket 创建评测容器，评测容器禁用网络，worker 并发数为 1。宿主机评测路径采用命名卷 `ai4batt-worker`。自动拉取评分镜像已禁用，使用本地构建的 `ai4batt/scoring:v1.33`；更换评分镜像时应预先构建或拉取。该镜像清除了应用镜像的 shell entrypoint，供 worker 直接运行评分命令。这仍需在正式比赛前配置独立评测机器、资源配额、备份和访问策略。

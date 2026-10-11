@@ -10,6 +10,7 @@ x-app: &app
   volumes:
     - ../.local/codabench:/app
     - ./local_settings.py:/app/src/settings/ai4batt.py:ro
+    - ./templates:/app/site_templates:ro
     - django-temp:/codalab_tmp
   restart: unless-stopped
 

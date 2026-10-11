@@ -5,6 +5,8 @@
 *.yaml text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=lf
+*.html text eol=lf
+*.TXT text eol=lf
 *.Dockerfile text eol=lf
 deploy/Caddyfile text eol=lf
 *.version text eol=lf

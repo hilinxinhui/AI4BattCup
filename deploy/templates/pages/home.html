@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    .cup-intro { padding: 3rem 0 2rem; text-align: center; }
+    .cup-intro h1 { font-size: clamp(2rem, 5vw, 3rem); }
+    .cup-intro p { font-size: 1.15rem; color: #526173; }
+    .cup-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin: 2rem 0; }
+    .cup-actions .ui.button { margin: 0; }
+    .cup-home { width: 100%; padding-bottom: 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="cup-home">
+    <section class="cup-intro" aria-labelledby="cup-title">
+        <h1 id="cup-title">AI for Batteries Cup</h1>
+        <h2>AI 电池挑战赛</h2>
+        <p>用 AI 探索电池问题。</p>
+        <div class="cup-actions">
+            <a class="ui primary large button" href="{% url 'competitions:public' %}">查看比赛</a>
+            {% if user.is_authenticated %}
+                <a class="ui large button" href="{% url 'competitions:management' %}">我的比赛</a>
+            {% else %}
+                <a class="ui large button" href="{% url 'accounts:login' %}">登录</a>
+            {% endif %}
+        </div>
+    </section>
+    <front-page-competitions></front-page-competitions>
+</main>
+{% endblock %}
