@@ -11,6 +11,8 @@ x-app: &app
     - ../.local/codabench:/app
     - ./local_settings.py:/app/src/settings/ai4batt.py:ro
     - ./templates:/app/site_templates:ro
+    - ./participant_policy.py:/app/src/participant_policy.py:ro
+    - ./participant_urls.py:/app/src/participant_urls.py:ro
     - django-temp:/codalab_tmp
   restart: unless-stopped
 

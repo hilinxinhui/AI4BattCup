@@ -112,6 +112,7 @@
                             </div>
                             <i class="dropdown icon"></i>
                             <div class="menu">
+                                {% if request.user.is_staff or request.user.is_superuser %}
                                 <!-- Admin management -->
                                 <div class="header">Admin management</div>
                                     <a class="item" href="{% url "pages:server_status" %}">Server Status</a>
@@ -128,6 +129,7 @@
                                 <a selenium="resources" class="item" href="{% url 'tasks:task_management' %}"><i class="icon bi bi-folder"></i>Resources</a>
                                 <a class="item" href="{% url 'queues:management' %}"><i class="icon bi bi-hourglass"></i>Queues</a>
                                 <div class="ui divider"></div>
+                                {% endif %}
                                 <!-- Account -->
                                 <div class="header">Account</div>
                                 <a class="item" href="{% url 'profiles:user_profile' username=user.username %}"><i class="icon bi bi-person"></i>View Profile</a>
@@ -140,6 +142,7 @@
                                 <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">{% csrf_token %}</form>
                                 <div class="ui divider"></div>
 
+                                {% if request.user.is_staff or request.user.is_superuser %}
                                 <div class="header">Organizations</div>
                             {% for org in user.organizations.all %}
                                 {% if user in org.user_record.all %}
@@ -153,6 +156,7 @@
                                     <i class="plus icon"></i>
                                     Create Organization
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     {% else %}
@@ -229,8 +233,7 @@
             if (user.is_superuser || user.is_staff) {
                 return true
             }
-            let collabs = _.map(competition.collaborators, collab => collab.username)
-            return user.username === competition.created_by || collabs.includes(user.username)
+            return false
         }
 
         // Load in URLs or other django generated goodies

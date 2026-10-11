@@ -42,6 +42,12 @@ docker compose --env-file .local/codabench/.env -f deploy/compose.yaml exec -T d
 
 ## 本地适配
 
+普通账户采用参赛者权限：可以浏览比赛、报名、下载允许访问的数据、上传自己的私有提交文件和查看结果；禁止创建或管理比赛、数据集、评分程序、任务、队列、组织及排行榜。前端隐藏管理入口，`participant_policy.py` 在后端同时检查 Session 和 Token 请求。提交上传仍使用上游的数据接口，但仅允许 `submission` 类型，并禁止公开或复用为其他资源。评分 worker 通过原有的单次提交 secret 回传状态和分数。
+
+`participant_urls.py` 保留原有路由，同时兼容管理员创建的无邮箱账户报名；不虚构邮箱，跳过没有收件地址的邮件。人工审批规则仍由每场比赛决定。
+
+`verify_participant_policy.py` 用真实 HTTP 请求验证禁止管理、报名审批、签名文件上传、提交评分、结果读取和管理员访问。运行测试时通过 `POLICY_TEST_USERNAME` 和 `POLICY_TEST_PASSWORD` 环境变量提供普通账户凭据，测试只使用虚拟数据，并保留未发布的测试记录。
+
 `deploy/templates` 保存本站页面模板，通过 `local_settings.py` 优先加载，无需修改 `.local` 中的上游源码。首页和页脚已移除上游机构标志、Partners、About、News、项目历史、论文引用以及其他平台宣传链接，改用 AI4Batt Cup 标题。保留比赛列表、数据集、登录与管理入口。修改模板后重启 Django 即可生效，无需重新构建镜像。
 
 `templates/base.html` 基于 Codabench v1.33 的同名模板修改，上游采用 Apache-2.0 许可，许可副本见 `templates/LICENSE.TXT`。

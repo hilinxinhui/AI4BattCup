@@ -7,3 +7,6 @@ SITE_DOMAIN = "http://localhost:8080"
 
 # Prefer the competition site's templates over upstream promotional pages.
 TEMPLATES[0]["DIRS"].insert(0, "/app/site_templates")
+
+MIDDLEWARE = (*MIDDLEWARE, "participant_policy.ParticipantOnlyMiddleware")
+ROOT_URLCONF = "participant_urls"

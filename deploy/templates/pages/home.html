@@ -19,9 +19,9 @@
         <p>用 AI 探索电池问题。</p>
         <div class="cup-actions">
             <a class="ui primary large button" href="{% url 'competitions:public' %}">查看比赛</a>
-            {% if user.is_authenticated %}
+            {% if user.is_staff or user.is_superuser %}
                 <a class="ui large button" href="{% url 'competitions:management' %}">我的比赛</a>
-            {% else %}
+            {% elif not user.is_authenticated %}
                 <a class="ui large button" href="{% url 'accounts:login' %}">登录</a>
             {% endif %}
         </div>
