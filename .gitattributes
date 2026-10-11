@@ -6,6 +6,7 @@
 *.sh text eol=lf
 *.ps1 text eol=lf
 *.html text eol=lf
+*.json text eol=lf
 *.TXT text eol=lf
 *.Dockerfile text eol=lf
 deploy/Caddyfile text eol=lf
